@@ -13,6 +13,6 @@ With capacitors, the output on the oscilliscope lookes like the following:
 
 ![clean.png](imgs/clean.png)
 
-The wiring on the breadboards looks like the following:
+The wiring on the breadboard looks like the following:
 
 ![breadboard.jpg](imgs/breadboard.jpg)
