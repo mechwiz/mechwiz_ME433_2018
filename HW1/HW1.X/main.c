@@ -54,9 +54,9 @@ int main() {
     DDPCONbits.JTAGEN = 0;
 
     // do your TRIS and LAT commands here
-    TRISAbits.TRISA4 = 0;
-    LATAbits.LATA4 = 1;
-    TRISBbits.TRISB4 = 1;
+    TRISAbits.TRISA4 = 0;  // make RA4 an output
+    LATAbits.LATA4 = 1; // make RA4 high to turn LED on initially
+    TRISBbits.TRISB4 = 1; // make RB4 an input
     __builtin_enable_interrupts();
 
     while(1) {
@@ -66,9 +66,11 @@ int main() {
             
         }
         _CP0_SET_COUNT(0);
+        // 0.5ms / (2/48000000) == 12000
         while (_CP0_GET_COUNT() < 12000) {
             
         }
+        //invert RA4
         LATAINV = 0x10;
     }
 }
