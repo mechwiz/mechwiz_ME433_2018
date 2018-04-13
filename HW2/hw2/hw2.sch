@@ -16467,8 +16467,8 @@ This footprint was designed to help hold the alignment of a through-hole compone
 <part name="IC2" library="hw2" deviceset="MCP1702" device=""/>
 <part name="LED1" library="hw2" deviceset="LED" device="3MM" package3d_urn="urn:adsk.eagle:package:15797/1" value="Red"/>
 <part name="LED2" library="hw2" deviceset="LED" device="3MM" package3d_urn="urn:adsk.eagle:package:15797/1" value="Green"/>
-<part name="RESET" library="hw2" deviceset="PB" device=""/>
-<part name="USER" library="hw2" deviceset="PB" device=""/>
+<part name="RESET" library="hw2" deviceset="PB" device="" value="RESET"/>
+<part name="USER" library="hw2" deviceset="PB" device="" value="USER"/>
 <part name="R1" library="hw2" deviceset="R-US_" device="0207/10" package3d_urn="urn:adsk.eagle:package:25939/1" value="330"/>
 <part name="R2" library="hw2" deviceset="R-US_" device="0207/10" package3d_urn="urn:adsk.eagle:package:25939/1" value="330"/>
 <part name="R3" library="hw2" deviceset="R-US_" device="0207/10" package3d_urn="urn:adsk.eagle:package:25939/1" value="10k"/>
@@ -16919,22 +16919,24 @@ This footprint was designed to help hold the alignment of a through-hole compone
 <label x="160.02" y="55.88" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="N$14" class="0">
+<net name="OSC1" class="0">
 <segment>
 <pinref part="IC1" gate="G$1" pin="9.OSC1/A2"/>
 <wire x1="5.08" y1="30.48" x2="-10.16" y2="30.48" width="0.1524" layer="91"/>
 <pinref part="U$8" gate="G$1" pin="1.OSC1"/>
 <wire x1="-10.16" y1="30.48" x2="-12.7" y2="30.48" width="0.1524" layer="91"/>
 <wire x1="-25.4" y1="30.48" x2="-12.7" y2="30.48" width="0.1524" layer="91"/>
+<label x="-25.4" y="30.48" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="N$15" class="0">
+<net name="OSC2" class="0">
 <segment>
 <pinref part="IC1" gate="G$1" pin="10.OSC2/A3"/>
 <wire x1="5.08" y1="25.4" x2="-17.78" y2="25.4" width="0.1524" layer="91"/>
 <pinref part="U$8" gate="G$1" pin="3.OSC2"/>
 <wire x1="-25.4" y1="20.32" x2="-17.78" y2="20.32" width="0.1524" layer="91"/>
 <wire x1="-17.78" y1="20.32" x2="-17.78" y2="25.4" width="0.1524" layer="91"/>
+<label x="-17.78" y="25.4" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="B4/USER" class="0">
