@@ -1661,7 +1661,10 @@ design rules under a new name.</description>
 <attribute name="NAME" x="3.937" y="0" size="0.6096" layer="25" font="vector" ratio="20" rot="R270"/>
 <attribute name="VALUE" x="5.588" y="6.35" size="1.27" layer="27" ratio="10" rot="R270"/>
 </element>
-<element name="PICKIT" library="hw2" package="1X05" value="PICKIT3" x="48.895" y="46.99" rot="R270"/>
+<element name="PICKIT" library="hw2" package="1X05" value="PICKIT3" x="48.895" y="46.99" smashed="yes" rot="R270">
+<attribute name="NAME" x="46.482" y="43.18" size="0.6096" layer="25" font="vector" ratio="20" rot="R270"/>
+<attribute name="VALUE" x="46.736" y="45.339" size="0.762" layer="27" ratio="20" rot="R270"/>
+</element>
 <element name="U$8" library="hw2" package="OSC" value="OSC" x="16.129" y="17.145" smashed="yes" rot="R270">
 <attribute name="NAME" x="17.526" y="20.955" size="0.6096" layer="25" font="vector" ratio="20" rot="R270"/>
 <attribute name="VALUE" x="14.097" y="18.415" size="0.6096" layer="27" font="vector" ratio="20" rot="R270"/>
