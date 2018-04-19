@@ -61,12 +61,12 @@ unsigned char spi_io(unsigned char o) {
 }
 
 // initialize spi4 and the ram module
-void ram_init() {
+void initSPI1() {
   // set up the chip select pin as an output
   // the chip select pin is used by the sram to indicate
   // when a command is beginning (clear CS to low) and when it
   // is ending (set CS high)
-  TRISBbits.TRISB8 = 0;
+  TRISAbits.TRISA0 = 0;
   CS = 1;
 
   // Master - SPI4, pins are: SDI4(F4), SDO4(F5), SCK4(F13).  
@@ -74,13 +74,17 @@ void ram_init() {
   // since the pic is just starting, we know that spi is off. We rely on defaults here
  
   // setup spi4
+  RPA1Rbits.RPA1R = 0b0011;
+  RPA0Rbits.RPA0R = 0b0011;     
   SPI1CON = 0;              // turn off the spi module and reset it
   SPI1BUF;                  // clear the rx buffer by reading from it
-  SPI1BRG = 0x3;            // baud rate to 10 MHz [SPI4BRG = (80000000/(2*desired))-1]
+  SPI1BRG = 0x1;            // baud rate to 10 MHz [SPI4BRG = (80000000/(2*desired))-1]
   SPI1STATbits.SPIROV = 0;  // clear the overflow bit
   SPI1CONbits.CKE = 1;      // data changes when clock goes from hi to lo (since CKP is 0)
   SPI1CONbits.MSTEN = 1;    // master operation
   SPI1CONbits.ON = 1;       // turn on spi 4
+  SPI1CONbits.MODE16 = 0;
+  SPI1CONbits.MODE32 = 0;
 
                             // send a ram set status command.
   CS = 0;                   // enable the ram
@@ -89,32 +93,20 @@ void ram_init() {
   CS = 1;                   // finish the command
 }
 
-// write len bytes to the ram, starting at the address addr
-void ram_write(unsigned short addr, const char data[], int len) {
-  int i = 0;
-  CS = 0;                        // enable the ram by lowering the chip select line
-  spi_io(0x2);                   // sequential write operation
-  spi_io((addr & 0xFF00) >> 8 ); // most significant byte of address
-  spi_io(addr & 0x00FF);         // the least significant address byte
-  for(i = 0; i < len; ++i) {
-    spi_io(data[i]);
-  }
-  CS = 1;                        // raise the chip select line, ending communication
+void setVoltage(char a,int v) {
+  unsigned short t = 0;
+  t = a<<15;
+  t = t | 0b0111000000000000;
+  t = t | v << 2;
+  
+  
+  CS = 0;                   // enable the ram
+  spi_io(t>>8);             // ram write status
+  spi_io(t&0xff);             // sequential mode (mode = 0b01), hold disabled (hold = 0)
+  CS = 1;                   // finish the command
+  
+  
 }
-
-// read len bytes from ram, starting at the address addr
-void ram_read(unsigned short addr, char data[], int len) {
-  int i = 0;
-  CS = 0;
-  spi_io(0x3);                   // ram read operation
-  spi_io((addr & 0xFF00) >> 8);  // most significant address byte
-  spi_io(addr & 0x00FF);         // least significant address byte
-  for(i = 0; i < len; ++i) {
-    data[i] = spi_io(0);         // read in the data
-  }
-  CS = 1;
-}
-
 int main(void) {
  
     __builtin_disable_interrupts();
@@ -130,38 +122,17 @@ int main(void) {
 
     // disable JTAG to get pins back
     DDPCONbits.JTAGEN = 0;
-
-    // do your TRIS and LAT commands here
-    TRISAbits.TRISA4 = 0;  // make RA4 an output
-    LATAbits.LATA4 = 1; // make RA4 high to turn LED on initially
-    TRISBbits.TRISB4 = 1; // make RB4 an input
-    __builtin_enable_interrupts();
-  
-    unsigned short addr1 = 0x1234;                  // the address for writing the ram
-    char data[] = "Help, I'm stuck in the RAM!";    // the test message
-    char read[] = "***************************";    // buffer for reading from ram
-    char buf[100];                                  // buffer for comm. with the user
-    unsigned char status;                           // used to verify we set the status 
     
-    ram_init(); 
-
+    initSPI1();
+    __builtin_enable_interrupts();
+    
+    
     // check the ram status
     CS = 0;
     spi_io(0x5);                                      // ram read status command
     status = spi_io(0);                               // the actual status
     CS = 1;
-
-    sprintf(buf, "Status 0x%x\r\n",status);
    
-
-    sprintf(buf,"Writing \"%s\" to ram at address 0x%x\r\n", data, addr1);
-    
-                                                      // write the data to the ram
-    ram_write(addr1, data, strlen(data) + 1);         // +1, to send the '\0' character
-    ram_read(addr1, read, strlen(data) + 1);          // read the data back
-    sprintf(buf,"Read \"%s\" from ram at address 0x%x\r\n", read, addr1);
-    
-
     while(1) {
       ;
     }
