@@ -1,5 +1,6 @@
 #include<xc.h>           // processor SFR definitions
 #include<sys/attribs.h>  // __ISR macro
+#include<math.h>
 
 // DEVCFG0
 #pragma config DEBUG = OFF // no debugging
@@ -93,9 +94,9 @@ void initSPI1() {
   CS = 1;                   // finish the command
 }
 
-void setVoltage(char a,int v) {
+void setVoltage(char c,int v) {
   unsigned short t = 0;
-  t = a<<15;
+  t = c<<15;
   t = t | 0b0111000000000000;
   t = t | v << 2;
   
@@ -126,15 +127,35 @@ int main(void) {
     initSPI1();
     __builtin_enable_interrupts();
     
-    
-    // check the ram status
-    CS = 0;
-    spi_io(0x5);                                      // ram read status command
-    status = spi_io(0);                               // the actual status
-    CS = 1;
-   
+    int i = 0;
+    int j = 0;
+    int mid = 0;
     while(1) {
-      ;
+        _CP0_SET_COUNT(0);
+        
+        float f = 512.0 + 512.0*sin(i*2.0*3.14/1000.0*10.0);
+        setVoltage(0,f);
+        i++;
+        
+        float tri = 10.0*j/1000.0*1023.0;
+        setVoltage(1,tri);
+        
+        if (mid == 0 && j< 100) {
+            if (j==99){
+                mid = 1;
+            }
+            j++;
+        }else{
+            if (j==1){
+                mid = 0;
+            }
+            j--;
+        }
+        
+        // 1ms / (2/48000000) == 24000
+        while (_CP0_GET_COUNT() < 24000) {
+            
+        }
     }
     return 0;
 }
