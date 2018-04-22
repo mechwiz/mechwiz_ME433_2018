@@ -1,4 +1,4 @@
-# ME-433 HW4
+# ME-433 HW5
 **Michael Wizniter**
 
 Circuit Diagram:
