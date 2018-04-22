@@ -44,7 +44,11 @@
 // SDA5 -> SDA1
 // SCL5 -> SCL1
 // Two bytes will be written to the slave and then read back to the slave.
-#define SLAVE_ADDR 0x32
+#define SLAVE_ADDR 0b0100000
+
+void initExpander();
+void setExpander(unsigned char pin,unsigned char level);
+unsigned char getExpander();
 
 int main() {
 
@@ -65,22 +69,25 @@ int main() {
     // do your TRIS and LAT commands here
     TRISAbits.TRISA4 = 0;  // make RA4 an output
     LATAbits.LATA4 = 1; // make RA4 high to turn LED on initially
-    TRISBbits.TRISB4 = 1; // make RB4 an input
+    initExpander();
     __builtin_enable_interrupts();
-
+    unsigned char r;
     while(1) {
 	// use _CP0_SET_COUNT(0) and _CP0_GET_COUNT() to test the PIC timing
 	// remember the core timer runs at half the sysclk
-        while (!PORTBbits.RB4) {
-            
-        }
         _CP0_SET_COUNT(0);
-        // 0.5ms / (2/48000000) == 12000
-        while (_CP0_GET_COUNT() < 12000) {
-            
+        // 0.5s / (2/48000000) == 12000
+        while (_CP0_GET_COUNT() < 4800000) {
         }
         //invert RA4
         LATAINV = 0x10;
+        
+        r = getExpander();
+        if (r >> 7 == 0) {
+            setExpander(0x0A,1);
+        } else {
+            setExpander(0x0A,0);
+        }
     }
 }
 
@@ -90,4 +97,29 @@ void initExpander(){
     ANSELBbits.ANSB3 = 0;
     i2c_master_setup();
     
+    setExpander(0x00,0xF0);
+    setExpander(0x0A,0);
+
+}
+
+void setExpander(unsigned char pin, unsigned char level){
+    i2c_master_start();
+    i2c_master_send(SLAVE_ADDR << 1 | 0);
+    i2c_master_send(pin);
+    i2c_master_send(level);
+    i2c_master_stop();
+    
+}
+
+unsigned char getExpander(){
+    i2c_master_start();
+    i2c_master_send(SLAVE_ADDR << 1 | 0);
+    i2c_master_send(0x09);
+    i2c_master_restart();
+    i2c_master_send(SLAVE_ADDR << 1 | 1);
+    unsigned char r = i2c_master_recv(); // save the value returned
+    i2c_master_ack(1); // make the ack so the slave knows we got it
+    i2c_master_stop(); // make the stop bit
+    
+    return r;
 }
