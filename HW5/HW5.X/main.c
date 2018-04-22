@@ -37,13 +37,7 @@
 #pragma config FUSBIDIO = ON // USB pins controlled by USB module
 #pragma config FVBUSONIO = ON // USB BUSON controlled by USB module
 
-// Demonstrate I2C by having the I2C1 talk to I2C5 on the same PIC32 (PIC32MX795F512H)
-// Master will use SDA1 (D9) and SCL1 (D10).  Connect these through resistors to
-// Vcc (3.3 V) (2.4k resistors recommended, but around that should be good enough)
-// Slave will use SDA5 (F4) and SCL5 (F5)
-// SDA5 -> SDA1
-// SCL5 -> SCL1
-// Two bytes will be written to the slave and then read back to the slave.
+// Set address
 #define SLAVE_ADDR 0b0100000
 
 void initExpander();
@@ -76,16 +70,19 @@ int main() {
 	// use _CP0_SET_COUNT(0) and _CP0_GET_COUNT() to test the PIC timing
 	// remember the core timer runs at half the sysclk
         _CP0_SET_COUNT(0);
-        // 0.5s / (2/48000000) == 12000
-        while (_CP0_GET_COUNT() < 4800000) {
+        // 0.1s / (2/48000000) == 2400000
+        while (_CP0_GET_COUNT() < 2400000) {
         }
         //invert RA4
         LATAINV = 0x10;
-        
+        //read GPIO
         r = getExpander();
+        //Bit-shift to get the value of bit 7 only
         if (r >> 7 == 0) {
+            // turn LED on
             setExpander(0x0A,1);
         } else {
+            // turn LED off
             setExpander(0x0A,0);
         }
     }
@@ -93,11 +90,14 @@ int main() {
 
 
 void initExpander(){
+    //turn off analog input on I2C2 pins
     ANSELBbits.ANSB2 = 0;
     ANSELBbits.ANSB3 = 0;
     i2c_master_setup();
     
+    //set bits 0-3 as output, 4-7 as input
     setExpander(0x00,0xF0);
+    //latch output pins to 0
     setExpander(0x0A,0);
 
 }
