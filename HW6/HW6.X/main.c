@@ -40,6 +40,7 @@
 
 void drawChar(unsigned short x, unsigned short y, unsigned char msg, unsigned short c1, unsigned short c2);
 void drawString(unsigned short x, unsigned short y, unsigned char *msg, unsigned short c1, unsigned short c2);
+void drawProgressBar(unsigned short x, unsigned short y, unsigned short h, unsigned short l1, unsigned short c1, unsigned short l2, unsigned short c2);
 
 int main(void) {
  
@@ -63,13 +64,17 @@ int main(void) {
     LCD_clearScreen(CYAN);
     unsigned char message[30];
     int p = 0;
+    float fps;
+    
     while(1) {
         
-        sprintf(message,"Hello World %d    \0",p);
-        drawString(28,32,message,MAGENTA,CYAN);
-        drawProgressBar(14,60,10,p,BLUE,100,YELLOW);
         _CP0_SET_COUNT(0);
-        
+        sprintf(message,"Hello World %d  ",p);
+        drawString(28,32,message,MAGENTA,CYAN);
+        drawProgressBar(14,60,5,p,BLUE,100,YELLOW);
+        fps = _CP0_GET_COUNT();
+        sprintf(message,"FPS = %.2f",24000000.0/fps);
+        drawString(28,100,message,MAGENTA,CYAN);
         // .1s / (2/48000000) == 2400000
         while (_CP0_GET_COUNT() < 2400000) {
             
