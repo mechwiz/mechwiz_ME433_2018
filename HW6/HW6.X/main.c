@@ -60,22 +60,24 @@ int main(void) {
     LCD_init();
     __builtin_enable_interrupts();
     
-    LCD_clearScreen(WHITE);
+    LCD_clearScreen(CYAN);
     unsigned char message[30];
     int p = 0;
     while(1) {
         
-        sprintf(message,"Hello World %d\0",p);
-        drawString(10,10,message,BLACK,WHITE);
+        sprintf(message,"Hello World %d    \0",p);
+        drawString(28,32,message,MAGENTA,CYAN);
+        drawProgressBar(14,60,10,p,BLUE,100,YELLOW);
         _CP0_SET_COUNT(0);
         
-        // 1s / (2/48000000) == 24000
-        while (_CP0_GET_COUNT() < 24000000) {
+        // .1s / (2/48000000) == 2400000
+        while (_CP0_GET_COUNT() < 2400000) {
             
         }
         p++;
-        sprintf(message,"Hello World      \0");
-        drawString(10,10,message,BLACK,WHITE);
+        if (p==101){
+            p=0;
+        }
     }
     return 0;
 }
@@ -106,4 +108,18 @@ void drawString(unsigned short x, unsigned short y, unsigned char *msg, unsigned
        i++;
    }
     
+}
+
+void drawProgressBar(unsigned short x, unsigned short y, unsigned short h, unsigned short l1, unsigned short c1, unsigned short l2, unsigned short c2){
+    int i;
+    int j;
+    int k;
+    for (i=0;i<h;i++){
+        for (j=0;j<l1;j++){
+            LCD_drawPixel(x+j,y+i,c1);
+        }
+        for (k=l1;k<l2;k++){
+            LCD_drawPixel(x+k,y+i,c2);
+        }
+    }
 }
