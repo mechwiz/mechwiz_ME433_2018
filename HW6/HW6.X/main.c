@@ -1,6 +1,6 @@
-#include<xc.h>           // processor SFR definitions
+#include<ST7735.h>           // processor SFR definitions
 #include<sys/attribs.h>  // __ISR macro
-#include<math.h>
+#include<stdio.h>
 
 // DEVCFG0
 #pragma config DEBUG = OFF // no debugging
@@ -37,61 +37,6 @@
 #pragma config FUSBIDIO = ON // USB pins controlled by USB module
 #pragma config FVBUSONIO = ON // USB BUSON controlled by USB module
 
-#define CS LATAbits.LATA0       // chip select pin
-
-// send a byte via spi and return the response
-unsigned char spi_io(unsigned char o) {
-  SPI1BUF = o;
-  while(!SPI1STATbits.SPIRBF) { // wait to receive the byte
-    ;
-  }
-  return SPI1BUF;
-}
-
-// initialize spi1
-void initSPI1() {
-  // set up the chip select pin as an output
-  // the chip select pin is used to indicate
-  // when a command is beginning (clear CS to low) and when it
-  // is ending (set CS high)
-  TRISAbits.TRISA0 = 0;
-  CS = 1;
- 
-  // setup spi1
-  RPA1Rbits.RPA1R = 0b0011; // set RA1 to be SDO1
-  RPA0Rbits.RPA0R = 0b0011; // set RA0 to be chip select
-  SPI1CON = 0;              // turn off the spi module and reset it
-  SPI1BUF;                  // clear the rx buffer by reading from it
-  SPI1BRG = 0x1;            // baud rate to 10 MHz [SPI4BRG = (80000000/(2*desired))-1]
-  SPI1STATbits.SPIROV = 0;  // clear the overflow bit
-  SPI1CONbits.CKE = 1;      // data changes when clock goes from hi to lo (since CKP is 0)
-  SPI1CONbits.MSTEN = 1;    // master operation
-  SPI1CONbits.ON = 1;       // turn on spi 1
-  SPI1CONbits.MODE16 = 0;
-  SPI1CONbits.MODE32 = 0;
-
-                            // send a ram set status command.
-  CS = 0;                   // enable the ram
-  spi_io(0x01);             // ram write status
-  spi_io(0x41);             // sequential mode (mode = 0b01), hold disabled (hold = 0)
-  CS = 1;                   // finish the command
-}
-
-void setVoltage(char c,int v) {
-  unsigned short t = 0;
-  t = c<<15; // bit shift so that channel is at bit 15
-  t = t | 0b0111000000000000; // get the config bits in there
-  t = t | v << 2;   //bit-shift voltage two places to the left
-                    //stick voltage into message bit
-  
-  
-  CS = 0;                   // enable the ram
-  spi_io(t>>8);             // write the first 8 bits
-  spi_io(t&0xff);             // write the last 8 bits
-  CS = 1;                   // finish the command
-  
-  
-}
 int main(void) {
  
     __builtin_disable_interrupts();
@@ -108,35 +53,11 @@ int main(void) {
     // disable JTAG to get pins back
     DDPCONbits.JTAGEN = 0;
     
-    initSPI1();
+    LCD_init();
     __builtin_enable_interrupts();
     
-    int i = 0;
-    int j = 0;
-    int mid = 0;
     while(1) {
         _CP0_SET_COUNT(0);
-        //start in middle since sin-wave goes negative
-        float f = 512.0 + 512.0*sin(i*2.0*3.14/1000.0*10.0);
-        setVoltage(0,f);
-        i++;
-        //start at 0V and ramp up to 3.3V in 10 cycles, then ramp down for 10 cycles.
-        float tri = 10.0*j/1000.0*1023.0;
-        setVoltage(1,tri);
-        // If still ramping up
-        if (mid == 0 && j< 100) {
-            // If about to reach midpoint
-            if (j==99){
-                mid = 1; // set flag that midpoint is reached
-            }
-            j++;    //increase voltage
-        }else{  //If after midpoint
-            // If about to reach 0 V
-            if (j==1){
-                mid = 0;   //clear midpoint flag
-            }
-            j--;    // decrease voltage
-        }
         
         // 1ms / (2/48000000) == 24000
         while (_CP0_GET_COUNT() < 24000) {
