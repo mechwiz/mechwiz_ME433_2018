@@ -1,6 +1,6 @@
-#include<ST7735.h>           // processor SFR definitions
 #include <xc.h>
 #include<sys/attribs.h>  // __ISR macro
+#include"ST7735.h"           // processor SFR definitions
 #include<stdio.h>
 
 // DEVCFG0
@@ -38,6 +38,9 @@
 #pragma config FUSBIDIO = ON // USB pins controlled by USB module
 #pragma config FVBUSONIO = ON // USB BUSON controlled by USB module
 
+void drawChar(unsigned short x, unsigned short y, unsigned char msg, unsigned short c1, unsigned short c2);
+void drawString(unsigned short x, unsigned short y, unsigned char *msg, unsigned short c1, unsigned short c2);
+
 int main(void) {
  
     __builtin_disable_interrupts();
@@ -57,24 +60,33 @@ int main(void) {
     LCD_init();
     __builtin_enable_interrupts();
     
+    LCD_clearScreen(WHITE);
+    unsigned char message[30];
+    int p = 0;
     while(1) {
+        
+        sprintf(message,"Hello World %d\0",p);
+        drawString(10,10,message,BLACK,WHITE);
         _CP0_SET_COUNT(0);
         
-        // 1ms / (2/48000000) == 24000
-        while (_CP0_GET_COUNT() < 24000) {
+        // 1s / (2/48000000) == 24000
+        while (_CP0_GET_COUNT() < 24000000) {
             
         }
+        p++;
+        sprintf(message,"Hello World      \0");
+        drawString(10,10,message,BLACK,WHITE);
     }
     return 0;
 }
 
 void drawChar(unsigned short x, unsigned short y, unsigned char msg, unsigned short c1, unsigned short c2){
     unsigned char row = msg-0x20;
-    
-    for (int col=0;col<5;col++){
+    int col;
+    for (col=0;col<5;col++){
         unsigned char pixels = ASCII[row][col];
-        
-        for (int i=0;i<8;i++){
+        int i;
+        for (i=0;i<8;i++){
             if ((x+col)<128 && (y+i)<160){
                 if (((pixels>>i) & 1) == 1){
                     LCD_drawPixel(x+col,y+i,c1);
@@ -84,4 +96,14 @@ void drawChar(unsigned short x, unsigned short y, unsigned char msg, unsigned sh
             }
         }
     }
+}
+
+void drawString(unsigned short x, unsigned short y, unsigned char *msg, unsigned short c1, unsigned short c2){
+   int i = 0;
+   
+   while(msg[i]){
+       drawChar(x+5*i,y,msg[i],c1,c2);
+       i++;
+   }
+    
 }
