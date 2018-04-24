@@ -1,4 +1,5 @@
 #include<ST7735.h>           // processor SFR definitions
+#include <xc.h>
 #include<sys/attribs.h>  // __ISR macro
 #include<stdio.h>
 
@@ -65,4 +66,22 @@ int main(void) {
         }
     }
     return 0;
+}
+
+void drawChar(unsigned short x, unsigned short y, unsigned char msg, unsigned short c1, unsigned short c2){
+    unsigned char row = msg-0x20;
+    
+    for (int col=0;col<5;col++){
+        unsigned char pixels = ASCII[row][col];
+        
+        for (int i=0;i<8;i++){
+            if ((x+col)<128 && (y+i)<160){
+                if (((pixels>>i) & 1) == 1){
+                    LCD_drawPixel(x+col,y+i,c1);
+                } else {
+                    LCD_drawPixel(x+col,y+i,c2);
+                }
+            }
+        }
+    }
 }
