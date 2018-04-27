@@ -1,6 +1,6 @@
-#include <xc.h>
+#include<xc.h>
 #include<sys/attribs.h>  // __ISR macro
-#include"ST7735.h"           // processor SFR definitions
+#include<ST7735.h>           // processor SFR definitions
 #include<stdio.h>
 
 // DEVCFG0

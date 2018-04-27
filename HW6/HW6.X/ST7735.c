@@ -14,8 +14,8 @@
 
 // B8 is turned into SDI1 but is not used or connected to anything
 
-#include <xc.h>
-#include "ST7735.h"
+#include<xc.h>
+#include<ST7735.h>
 
 void SPI1_init() {
   SDI1Rbits.SDI1R = 0b0100; // B8 is SDI1
