@@ -1,5 +1,5 @@
 #include<xc.h>
-#include "i2c_master_noint.h"
+#include<i2c_master_noint.h>
 
 // I2C Master utilities, 100 kHz, using polling rather than interrupts
 // The functions must be callled in the correct order as per the I2C protocol
