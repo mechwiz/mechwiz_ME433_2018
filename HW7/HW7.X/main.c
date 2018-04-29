@@ -1,6 +1,7 @@
 #include<xc.h>
 #include<sys/attribs.h>  // __ISR macro
-#include<ST7735.h>           // processor SFR definitions
+#include "ST7735.h"           // processor SFR definitions
+#include "i2c_master_noint.h"
 #include<stdio.h>
 
 // DEVCFG0
@@ -39,11 +40,11 @@
 #pragma config FVBUSONIO = ON // USB BUSON controlled by USB module
 
 // Set address
-#define SLAVE_ADDR 0b0100000
+#define SLAVE_ADDR 0b1101011
 
-void initExpander();
-void setExpander(unsigned char pin,unsigned char level);
-unsigned char getExpander();
+void initIMU();
+void setIMU(unsigned char pin,unsigned char level);
+void getIMU(unsigned char register, unsigned char * data, int length);
 
 void drawChar(unsigned short x, unsigned short y, unsigned char msg, unsigned short c1, unsigned short c2);
 void drawString(unsigned short x, unsigned short y, unsigned char *msg, unsigned short c1, unsigned short c2);
@@ -65,27 +66,51 @@ int main(void) {
     // disable JTAG to get pins back
     DDPCONbits.JTAGEN = 0;
     
+    // do your TRIS and LAT commands here
+    TRISAbits.TRISA4 = 0;  // make RA4 an output
+    LATAbits.LATA4 = 1; // make RA4 high to turn LED on initially
+    
     LCD_init();
+    initIMU();
     __builtin_enable_interrupts();
     
     LCD_clearScreen(CYAN);
     unsigned char message[30];
+    unsigned char data[14];
+    short values[7];
     int p = 0;
+    int i = 0;
+    unsigned char whoami;
     float fps;
     
     while(1) {
         
         _CP0_SET_COUNT(0);
+        getIMU(0x20,data,14);
+        for (i=0;i<14;i+=2){
+            values[i/2] = data[i] | (data[i+1]<<8);
+        }
+        getIMU(0x0F,data,1);
+        whoami = data[0];
         sprintf(message,"Hello World %d  ",p);
         drawString(28,32,message,MAGENTA,CYAN);
-        drawProgressBar(14,60,5,p,BLUE,100,YELLOW);
+        sprintf(message,"AX %d  ",values[4]);
+        drawString(28,42,message,MAGENTA,CYAN);
+        sprintf(message,"AY %d  ",values[5]);
+        drawString(28,52,message,MAGENTA,CYAN);
+        sprintf(message,"Whoami %d  ",whoami);
+        drawString(28,62,message,MAGENTA,CYAN);
+        drawProgressBar(14,72,5,p,BLUE,100,YELLOW);
         fps = _CP0_GET_COUNT();
         sprintf(message,"FPS = %.2f",24000000.0/fps);
         drawString(28,100,message,MAGENTA,CYAN);
-        // .1s / (2/48000000) == 2400000
-        while (_CP0_GET_COUNT() < 2400000) {
+        // .05s / (2/48000000) == 1200000
+        while (_CP0_GET_COUNT() < 1200000) {
             
         }
+        //invert RA4
+        LATAINV = 0x10;
+        
         p++;
         if (p==101){
             p=0;
@@ -94,20 +119,20 @@ int main(void) {
     return 0;
 }
 
-void initExpander(){
+void initIMU(){
     //turn off analog input on I2C2 pins
     ANSELBbits.ANSB2 = 0;
     ANSELBbits.ANSB3 = 0;
     i2c_master_setup();
     
-    //set bits 0-3 as output, 4-7 as input
-    setExpander(0x00,0xF0);
-    //latch output pins to 0
-    setExpander(0x0A,0);
+    //set 1.66 kHz, 2g, and 100 Hz
+    setIMU(0x10,0b10000010);
+    //set 1.66 kHz and 1000 dps
+    setIMU(0x11,0b10001000);
 
 }
 
-void setExpander(unsigned char pin, unsigned char level){
+void setIMU(unsigned char pin, unsigned char level){
     i2c_master_start();
     i2c_master_send(SLAVE_ADDR << 1 | 0);
     i2c_master_send(pin);
@@ -116,17 +141,23 @@ void setExpander(unsigned char pin, unsigned char level){
     
 }
 
-unsigned char getExpander(){
+void getIMU(unsigned char reg, unsigned char * data, int length){
     i2c_master_start();
     i2c_master_send(SLAVE_ADDR << 1 | 0);
-    i2c_master_send(0x09);
+    i2c_master_send(reg);
     i2c_master_restart();
     i2c_master_send(SLAVE_ADDR << 1 | 1);
-    unsigned char r = i2c_master_recv(); // save the value returned
-    i2c_master_ack(1); // make the ack so the slave knows we got it
+    int i;
+    for(i=0;i<length;i++){
+        data[i]=i2c_master_recv();
+        if(i==length-1){
+            i2c_master_ack(1);
+        }else {
+            i2c_master_ack(0);
+        }
+    }
     i2c_master_stop(); // make the stop bit
-    
-    return r;
+  
 }
 
 void drawChar(unsigned short x, unsigned short y, unsigned char msg, unsigned short c1, unsigned short c2){
