@@ -48,7 +48,10 @@ void getIMU(unsigned char register, unsigned char * data, int length);
 
 void drawChar(unsigned short x, unsigned short y, unsigned char msg, unsigned short c1, unsigned short c2);
 void drawString(unsigned short x, unsigned short y, unsigned char *msg, unsigned short c1, unsigned short c2);
-void drawProgressBar(unsigned short x, unsigned short y, unsigned short h, unsigned short l1, unsigned short c1, unsigned short l2, unsigned short c2);
+void drawHorizontalBar(unsigned short x, unsigned short y, unsigned short h, signed short l1, unsigned short c1, unsigned short l2, unsigned short c2);
+void drawVerticalBar(unsigned short x, unsigned short y, unsigned short h, signed short l1, unsigned short c1, unsigned short l2, unsigned short c2);
+void drawMiddle(unsigned short x, unsigned short y, unsigned short h, unsigned short c);
+short map(float input, float input_min, float input_max, float output_min, float output_max);
 
 int main(void) {
  
@@ -78,10 +81,9 @@ int main(void) {
     unsigned char message[30];
     unsigned char data[14];
     short values[7];
-    int p = 0;
-    int i = 0;
+    int i;
     unsigned char whoami;
-    float fps;
+    short x_pix, y_pix;
     
     while(1) {
         
@@ -92,29 +94,24 @@ int main(void) {
         }
         getIMU(0x0F,data,1);
         whoami = data[0];
-        sprintf(message,"Hello World %d  ",p);
-        drawString(28,32,message,MAGENTA,CYAN);
+        sprintf(message,"WHOAMI %d  ",whoami);
+        drawString(10,10,message,MAGENTA,CYAN);
         sprintf(message,"AX %d  ",values[4]);
-        drawString(28,42,message,MAGENTA,CYAN);
+        drawString(10,20,message,MAGENTA,CYAN);
         sprintf(message,"AY %d  ",values[5]);
-        drawString(28,52,message,MAGENTA,CYAN);
-        sprintf(message,"Whoami %d  ",whoami);
-        drawString(28,62,message,MAGENTA,CYAN);
-        drawProgressBar(14,72,5,p,BLUE,100,YELLOW);
-        fps = _CP0_GET_COUNT();
-        sprintf(message,"FPS = %.2f",24000000.0/fps);
-        drawString(28,100,message,MAGENTA,CYAN);
-        // .05s / (2/48000000) == 1200000
-        while (_CP0_GET_COUNT() < 1200000) {
+        drawString(10,30,message,MAGENTA,CYAN);
+        x_pix = map(values[4],-16384.0,16383.0,-60.0,60.0);
+        y_pix = map(values[5],-16384.0,16383.0,-60.0,60.0); 
+        drawHorizontalBar(4,94,4,-x_pix,YELLOW,120,BLUE);
+        drawVerticalBar(62,36,4,-y_pix,YELLOW,120,BLUE);
+        drawMiddle(62,94,4,BLUE);
+        // .025s / (2/48000000) == 600000
+        while (_CP0_GET_COUNT() < 600000) {
             
         }
         //invert RA4
         LATAINV = 0x10;
         
-        p++;
-        if (p==101){
-            p=0;
-        }
     }
     return 0;
 }
@@ -188,17 +185,81 @@ void drawString(unsigned short x, unsigned short y, unsigned char *msg, unsigned
     
 }
 
-void drawProgressBar(unsigned short x, unsigned short y, unsigned short h, unsigned short l1, unsigned short c1, unsigned short l2, unsigned short c2){
+void drawHorizontalBar(unsigned short x, unsigned short y, unsigned short h, signed short l1, unsigned short c1, unsigned short l2, unsigned short c2){
     int i;
     int j;
     int k;
+    int m;
     for (i=0;i<h;i++){
-        for (j=0;j<l1;j++){
-            LCD_drawPixel(x+j,y+i,c1);
-        }
-        for (k=l1;k<l2;k++){
-            LCD_drawPixel(x+k,y+i,c2);
+        if(l1<0){
+            l1 = max(-60,l1);
+            for (j=0;j<(60+l1);j++){
+                LCD_drawPixel(x+j,y+i,c1);
+            }
+            for (k=(60+l1);k<60;k++){
+                LCD_drawPixel(x+k,y+i,c2);
+            }
+            for (m=60;m<l2;m++){
+                LCD_drawPixel(x+m,y+i,c1);
+            }
+        } else {
+            l1 = min(60,l1);
+            for (j=0;j<60;j++){
+                LCD_drawPixel(x+j,y+i,c1);
+            }
+            for (k=60;k<(60+l1);k++){
+                LCD_drawPixel(x+k,y+i,c2);
+            }
+            for (m=(60+l1);m<l2;m++){
+                LCD_drawPixel(x+m,y+i,c1);
+            }
         }
     }
+}
+
+void drawVerticalBar(unsigned short x, unsigned short y, unsigned short h, signed short l1, unsigned short c1, unsigned short l2, unsigned short c2){
+    int i;
+    int j;
+    int k;
+    int m;
+    for (i=0;i<h;i++){
+        if(l1<0){
+            l1 = max(-60,l1);
+            for (j=0;j<(60+l1);j++){
+                LCD_drawPixel(x+i,y+j,c1);
+            }
+            for (k=(60+l1);k<60;k++){
+                LCD_drawPixel(x+i,y+k,c2);
+            }
+            for (m=60;m<l2;m++){
+                LCD_drawPixel(x+i,y+m,c1);
+            }
+        } else {
+            l1 = min(60,l1);
+            for (j=0;j<60;j++){
+                LCD_drawPixel(x+i,y+j,c1);
+            }
+            for (k=60;k<(60+l1);k++){
+                LCD_drawPixel(x+i,y+k,c2);
+            }
+            for (m=(60+l1);m<l2;m++){
+                LCD_drawPixel(x+i,y+m,c1);
+            }
+        }
+    }
+}
+
+void drawMiddle(unsigned short x, unsigned short y, unsigned short h, unsigned short c){
+    int i, j;
+    for (i=0;i<h;i++){
+        for (j=0;j<h;j++){
+            LCD_drawPixel(x+i,y+j,c);
+        }
+    }
+}
+
+short map(float input, float input_min, float input_max, float output_min, float output_max){
+    short output = (short)(output_min + (input - input_min)*((output_max - output_min) / (input_max - input_min)));
+    return output;
 }
 
