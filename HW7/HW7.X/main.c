@@ -100,13 +100,14 @@ int main(void) {
         drawString(10,20,message,MAGENTA,CYAN);
         sprintf(message,"AY %d  ",values[5]);
         drawString(10,30,message,MAGENTA,CYAN);
+        //map values to be +/- 1g. Could do +/- 2g too.
         x_pix = map(values[4],-16384.0,16383.0,-60.0,60.0);
         y_pix = map(values[5],-16384.0,16383.0,-60.0,60.0); 
         drawHorizontalBar(4,94,4,-x_pix,YELLOW,120,BLUE);
         drawVerticalBar(62,36,4,-y_pix,YELLOW,120,BLUE);
         drawMiddle(62,94,4,BLUE);
-        // .025s / (2/48000000) == 600000
-        while (_CP0_GET_COUNT() < 600000) {
+        // .05s / (2/48000000) == 1200000
+        while (_CP0_GET_COUNT() < 1200000) {
             
         }
         //invert RA4
