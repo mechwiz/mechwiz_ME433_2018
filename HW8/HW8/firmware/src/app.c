@@ -79,9 +79,11 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
     Application strings and buffers are be defined outside this structure.
 */
 
-APP_DATA appData;
 // Set address
 #define SLAVE_ADDR 0b1101011
+
+APP_DATA appData;
+
 // *****************************************************************************
 // *****************************************************************************
 // Section: Application Callback Functions
@@ -115,16 +117,7 @@ APP_DATA appData;
   Remarks:
     See prototype in app.h.
  */
-void initIMU();
-void setIMU(unsigned char pin,unsigned char level);
-void getIMU(unsigned char register, unsigned char * data, int length);
 
-void drawChar(unsigned short x, unsigned short y, unsigned char msg, unsigned short c1, unsigned short c2);
-void drawString(unsigned short x, unsigned short y, unsigned char *msg, unsigned short c1, unsigned short c2);
-void drawHorizontalBar(unsigned short x, unsigned short y, unsigned short h, signed short l1, unsigned short c1, unsigned short l2, unsigned short c2);
-void drawVerticalBar(unsigned short x, unsigned short y, unsigned short h, signed short l1, unsigned short c1, unsigned short l2, unsigned short c2);
-void drawMiddle(unsigned short x, unsigned short y, unsigned short h, unsigned short c);
-short map(float input, float input_min, float input_max, float output_min, float output_max);
 
 void APP_Initialize ( void )
 {

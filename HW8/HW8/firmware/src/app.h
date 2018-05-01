@@ -198,7 +198,16 @@ void APP_Initialize ( void );
 
 void APP_Tasks( void );
 
+void initIMU();
+void setIMU(unsigned char pin,unsigned char level);
+void getIMU(unsigned char register, unsigned char * data, int length);
 
+void drawChar(unsigned short x, unsigned short y, unsigned char msg, unsigned short c1, unsigned short c2);
+void drawString(unsigned short x, unsigned short y, unsigned char *msg, unsigned short c1, unsigned short c2);
+void drawHorizontalBar(unsigned short x, unsigned short y, unsigned short h, signed short l1, unsigned short c1, unsigned short l2, unsigned short c2);
+void drawVerticalBar(unsigned short x, unsigned short y, unsigned short h, signed short l1, unsigned short c1, unsigned short l2, unsigned short c2);
+void drawMiddle(unsigned short x, unsigned short y, unsigned short h, unsigned short c);
+short map(float input, float input_min, float input_max, float output_min, float output_max);
 #endif /* _APP_H */
 
 //DOM-IGNORE-BEGIN
