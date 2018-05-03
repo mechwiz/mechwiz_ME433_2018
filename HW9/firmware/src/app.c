@@ -56,6 +56,7 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include "app.h"
 #include <stdio.h>
 #include <xc.h>
+#include "i2c_master_noint.h"
 
 // *****************************************************************************
 // *****************************************************************************
@@ -84,6 +85,8 @@ int startTime = 0;
  */
 
 APP_DATA appData;
+// Set address
+#define SLAVE_ADDR 0b1101011
 
 // *****************************************************************************
 // *****************************************************************************
@@ -340,6 +343,30 @@ void APP_Initialize(void) {
     /* Set up the read buffer */
     appData.readBuffer = &readBuffer[0];
 
+        /* TODO: Initialize your application's state machine and other
+     * parameters.
+     */
+    __builtin_disable_interrupts();
+
+    // set the CP0 CONFIG register to indicate that kseg0 is cacheable (0x3)
+    __builtin_mtc0(_CP0_CONFIG, _CP0_CONFIG_SELECT, 0xa4210583);
+
+    // 0 data RAM access wait states
+    BMXCONbits.BMXWSDRM = 0x0;
+
+    // enable multi vector interrupts
+    INTCONbits.MVEC = 0x1;
+
+    // disable JTAG to get pins back
+    DDPCONbits.JTAGEN = 0;
+    
+    // do your TRIS and LAT commands here
+    TRISAbits.TRISA4 = 0;  // make RA4 an output
+    LATAbits.LATA4 = 1; // make RA4 high to turn LED on initially
+    
+    initIMU();
+    __builtin_enable_interrupts();
+    
     startTime = _CP0_GET_COUNT();
 }
 
@@ -474,7 +501,46 @@ void APP_Tasks(void) {
     }
 }
 
+void initIMU(){
+    //turn off analog input on I2C2 pins
+    ANSELBbits.ANSB2 = 0;
+    ANSELBbits.ANSB3 = 0;
+    i2c_master_setup();
+    
+    //set 1.66 kHz, 2g, and 100 Hz
+    setIMU(0x10,0b10000010);
+    //set 1.66 kHz and 1000 dps
+    setIMU(0x11,0b10001000);
 
+}
+
+void setIMU(unsigned char pin, unsigned char level){
+    i2c_master_start();
+    i2c_master_send(SLAVE_ADDR << 1 | 0);
+    i2c_master_send(pin);
+    i2c_master_send(level);
+    i2c_master_stop();
+    
+}
+
+void getIMU(unsigned char reg, unsigned char * data, int length){
+    i2c_master_start();
+    i2c_master_send(SLAVE_ADDR << 1 | 0);
+    i2c_master_send(reg);
+    i2c_master_restart();
+    i2c_master_send(SLAVE_ADDR << 1 | 1);
+    int i;
+    for(i=0;i<length;i++){
+        data[i]=i2c_master_recv();
+        if(i==length-1){
+            i2c_master_ack(1);
+        }else {
+            i2c_master_ack(0);
+        }
+    }
+    i2c_master_stop(); // make the stop bit
+  
+}
 
 /*******************************************************************************
  End of File

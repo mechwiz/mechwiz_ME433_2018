@@ -250,6 +250,9 @@ void APP_Initialize ( void );
 
 void APP_Tasks( void );
 
+void initIMU();
+void setIMU(unsigned char pin,unsigned char level);
+void getIMU(unsigned char register, unsigned char * data, int length);
 
 #endif /* _APP_H */
 
