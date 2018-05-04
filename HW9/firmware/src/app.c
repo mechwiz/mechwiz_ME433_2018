@@ -69,8 +69,7 @@ uint8_t APP_MAKE_BUFFER_DMA_READY dataOut[APP_READ_BUFFER_SIZE];
 uint8_t APP_MAKE_BUFFER_DMA_READY readBuffer[APP_READ_BUFFER_SIZE];
 int len, i = 0;
 int startTime = 0; // to remember the loop time
-int imuTime = 0;
-int first = 0;
+int blinkTime = 0;
 
 // *****************************************************************************
 /* Application Data
@@ -370,7 +369,7 @@ void APP_Initialize(void) {
     __builtin_enable_interrupts();
 
     startTime = _CP0_GET_COUNT();
-    imuTime = _CP0_GET_COUNT();
+    blinkTime = _CP0_GET_COUNT();
 }
 
 /******************************************************************************
@@ -475,30 +474,23 @@ void APP_Tasks(void) {
             appData.isWriteComplete = false;
             appData.state = APP_STATE_WAIT_FOR_WRITE_COMPLETE;
 
-            static unsigned char data[14];
-            static short values[7];
-            static int j;
-
-
-            
-
-
             /* PUT THE TEXT YOU WANT TO SEND TO THE COMPUTER IN dataOut
             AND REMEMBER THE NUMBER OF CHARACTERS IN len */
             /* THIS IS WHERE YOU CAN READ YOUR IMU, PRINT TO THE LCD, ETC */
-            if (appData.readBuffer[0]=='r'){
-                if (first == 0 ||_CP0_GET_COUNT() - imuTime > (48000000 / 2 / 5)) {
-                    imuTime = _CP0_GET_COUNT();
-                    
-                    first = 1;
-                    getIMU(0x20,data,14);
-                    for (j=0;j<14;j+=2){
-                        values[j/2] = data[j] | (data[j+1]<<8);
-                    }
-                    
+            if (_CP0_GET_COUNT() - blinkTime > (48000000 / 2 / 5)) {
+                    blinkTime = _CP0_GET_COUNT();
 
                     //invert RA4
                     LATAINV = 0x10;
+            }
+            
+            if (appData.readBuffer[0]=='r'){
+                static unsigned char data[14];
+                static short values[7];
+                static int j;
+                getIMU(0x20,data,14);
+                for (j=0;j<14;j+=2){
+                    values[j/2] = data[j] | (data[j+1]<<8);
                 }
                 len = sprintf(dataOut, "%d, %d, %d, %d, %d, %d, %d\r\n", i,values[4],values[5],values[6],values[1],values[2],values[3]);
                 i++; // increment the index so we see a change in the text
