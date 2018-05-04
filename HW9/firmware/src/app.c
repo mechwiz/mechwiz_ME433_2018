@@ -1,9 +1,9 @@
 /*******************************************************************************
   MPLAB Harmony Application Source File
-  
+
   Company:
     Microchip Technology Inc.
-  
+
   File Name:
     app.c
 
@@ -11,8 +11,8 @@
     This file contains the source code for the MPLAB Harmony application.
 
   Description:
-    This file contains the source code for the MPLAB Harmony application.  It 
-    implements the logic of the application's state machine and it may call 
+    This file contains the source code for the MPLAB Harmony application.  It
+    implements the logic of the application's state machine and it may call
     API routines of other MPLAB Harmony modules in the system, such as drivers,
     system services, and middleware.  However, it does not call any of the
     system interfaces (such as the "Initialize" and "Tasks" functions) of any of
@@ -49,15 +49,16 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 
 // *****************************************************************************
 // *****************************************************************************
-// Section: Included Files 
+// Section: Included Files
 // *****************************************************************************
 // *****************************************************************************
 
 #include "app.h"
 #include <stdio.h>
 #include <xc.h>
-#include "i2c_master_noint.h"
 
+// Set address
+#define SLAVE_ADDR 0b1101011
 // *****************************************************************************
 // *****************************************************************************
 // Section: Global Data Definitions
@@ -67,7 +68,9 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 uint8_t APP_MAKE_BUFFER_DMA_READY dataOut[APP_READ_BUFFER_SIZE];
 uint8_t APP_MAKE_BUFFER_DMA_READY readBuffer[APP_READ_BUFFER_SIZE];
 int len, i = 0;
-int startTime = 0;
+int startTime = 0; // to remember the loop time
+int imuTime = 0;
+int first = 0;
 
 // *****************************************************************************
 /* Application Data
@@ -80,13 +83,11 @@ int startTime = 0;
 
   Remarks:
     This structure should be initialized by the APP_Initialize function.
-    
+
     Application strings and buffers are be defined outside this structure.
  */
 
 APP_DATA appData;
-// Set address
-#define SLAVE_ADDR 0b1101011
 
 // *****************************************************************************
 // *****************************************************************************
@@ -343,6 +344,7 @@ void APP_Initialize(void) {
     /* Set up the read buffer */
     appData.readBuffer = &readBuffer[0];
 
+    /* PUT YOUR LCD, IMU, AND PIN INITIALIZATIONS HERE */
         /* TODO: Initialize your application's state machine and other
      * parameters.
      */
@@ -366,8 +368,9 @@ void APP_Initialize(void) {
     
     initIMU();
     __builtin_enable_interrupts();
-    
+
     startTime = _CP0_GET_COUNT();
+    imuTime = _CP0_GET_COUNT();
 }
 
 /******************************************************************************
@@ -427,6 +430,12 @@ void APP_Tasks(void) {
                         &appData.readTransferHandle, appData.readBuffer,
                         APP_READ_BUFFER_SIZE);
 
+                        /* AT THIS POINT, appData.readBuffer[0] CONTAINS A LETTER
+                        THAT WAS SENT FROM THE COMPUTER */
+                        /* YOU COULD PUT AN IF STATEMENT HERE TO DETERMINE WHICH LETTER
+                        WAS RECEIVED (USUALLY IT IS THE NULL CHARACTER BECAUSE NOTHING WAS
+                      TYPED) */
+
                 if (appData.readTransferHandle == USB_DEVICE_CDC_TRANSFER_HANDLE_INVALID) {
                     appData.state = APP_STATE_ERROR;
                     break;
@@ -445,9 +454,11 @@ void APP_Tasks(void) {
             /* Check if a character was received or a switch was pressed.
              * The isReadComplete flag gets updated in the CDC event handler. */
 
-            if (appData.isReadComplete || _CP0_GET_COUNT() - startTime > (48000000 / 2 / 5)) {
+             /* WAIT FOR 5HZ TO PASS OR UNTIL A LETTER IS RECEIVED */
+            if (appData.isReadComplete || _CP0_GET_COUNT() - startTime > (48000000 / 2 / 100)) {
                 appData.state = APP_STATE_SCHEDULE_WRITE;
             }
+
 
             break;
 
@@ -463,19 +474,42 @@ void APP_Tasks(void) {
             appData.writeTransferHandle = USB_DEVICE_CDC_TRANSFER_HANDLE_INVALID;
             appData.isWriteComplete = false;
             appData.state = APP_STATE_WAIT_FOR_WRITE_COMPLETE;
+            
+            static unsigned char data[14];
+            static short values[7];
+            static int j;
+            
+            if (first == 0 ||_CP0_GET_COUNT() - imuTime > (48000000 / 2 / 5)) {
+                first = 1;
+                imuTime = _CP0_GET_COUNT();
+                
+                getIMU(0x20,data,14);
+                for (j=0;j<14;j+=2){
+                    values[j/2] = data[j] | (data[j+1]<<8);
+                }
+                //invert RA4
+                LATAINV = 0x10;
+            }
+           
 
-            len = sprintf(dataOut, "%d\r\n", i);
-            i++;
+            /* PUT THE TEXT YOU WANT TO SEND TO THE COMPUTER IN dataOut
+            AND REMEMBER THE NUMBER OF CHARACTERS IN len */
+            /* THIS IS WHERE YOU CAN READ YOUR IMU, PRINT TO THE LCD, ETC */
+            len = sprintf(dataOut, "%d, %d, %d, %d, %d, %d, %d\r\n", i,values[4],values[5],values[6],values[1],values[2],values[3]);
+            i++; // increment the index so we see a change in the text
+            /* IF A LETTER WAS RECEIVED, ECHO IT BACK SO THE USER CAN SEE IT */
             if (appData.isReadComplete) {
                 USB_DEVICE_CDC_Write(USB_DEVICE_CDC_INDEX_0,
                         &appData.writeTransferHandle,
                         appData.readBuffer, 1,
                         USB_DEVICE_CDC_TRANSFER_FLAGS_DATA_COMPLETE);
-            } else {
+            }
+            /* ELSE SEND THE MESSAGE YOU WANTED TO SEND */
+            else {
                 USB_DEVICE_CDC_Write(USB_DEVICE_CDC_INDEX_0,
                         &appData.writeTransferHandle, dataOut, len,
                         USB_DEVICE_CDC_TRANSFER_FLAGS_DATA_COMPLETE);
-                startTime = _CP0_GET_COUNT();
+                startTime = _CP0_GET_COUNT(); // reset the timer for acurate delays
             }
             break;
 
@@ -500,6 +534,7 @@ void APP_Tasks(void) {
             break;
     }
 }
+
 
 void initIMU(){
     //turn off analog input on I2C2 pins
@@ -541,7 +576,6 @@ void getIMU(unsigned char reg, unsigned char * data, int length){
     i2c_master_stop(); // make the stop bit
   
 }
-
 /*******************************************************************************
  End of File
  */
