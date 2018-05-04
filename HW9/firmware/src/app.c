@@ -429,7 +429,7 @@ void APP_Tasks(void) {
                 USB_DEVICE_CDC_Read(USB_DEVICE_CDC_INDEX_0,
                         &appData.readTransferHandle, appData.readBuffer,
                         APP_READ_BUFFER_SIZE);
-
+                
                         /* AT THIS POINT, appData.readBuffer[0] CONTAINS A LETTER
                         THAT WAS SENT FROM THE COMPUTER */
                         /* YOU COULD PUT AN IF STATEMENT HERE TO DETERMINE WHICH LETTER
@@ -468,49 +468,63 @@ void APP_Tasks(void) {
             if (APP_StateReset()) {
                 break;
             }
-
+            
             /* Setup the write */
 
             appData.writeTransferHandle = USB_DEVICE_CDC_TRANSFER_HANDLE_INVALID;
             appData.isWriteComplete = false;
             appData.state = APP_STATE_WAIT_FOR_WRITE_COMPLETE;
-            
+
             static unsigned char data[14];
             static short values[7];
             static int j;
+
+
             
-            if (first == 0 ||_CP0_GET_COUNT() - imuTime > (48000000 / 2 / 5)) {
-                first = 1;
-                imuTime = _CP0_GET_COUNT();
-                
-                getIMU(0x20,data,14);
-                for (j=0;j<14;j+=2){
-                    values[j/2] = data[j] | (data[j+1]<<8);
-                }
-                //invert RA4
-                LATAINV = 0x10;
-            }
-           
+
 
             /* PUT THE TEXT YOU WANT TO SEND TO THE COMPUTER IN dataOut
             AND REMEMBER THE NUMBER OF CHARACTERS IN len */
             /* THIS IS WHERE YOU CAN READ YOUR IMU, PRINT TO THE LCD, ETC */
-            len = sprintf(dataOut, "%d, %d, %d, %d, %d, %d, %d\r\n", i,values[4],values[5],values[6],values[1],values[2],values[3]);
-            i++; // increment the index so we see a change in the text
+            if (appData.readBuffer[0]=='r'){
+                if (first == 0 ||_CP0_GET_COUNT() - imuTime > (48000000 / 2 / 5)) {
+                    imuTime = _CP0_GET_COUNT();
+                    
+                    first = 1;
+                    getIMU(0x20,data,14);
+                    for (j=0;j<14;j+=2){
+                        values[j/2] = data[j] | (data[j+1]<<8);
+                    }
+                    
+
+                    //invert RA4
+                    LATAINV = 0x10;
+                }
+                len = sprintf(dataOut, "%d, %d, %d, %d, %d, %d, %d\r\n", i,values[4],values[5],values[6],values[1],values[2],values[3]);
+                i++; // increment the index so we see a change in the text
+                if (i==100){
+                    appData.readBuffer[0]='n';
+                    i = 0;
+                }
+            }else{
+                len = 1;
+                dataOut[0]=0;
+            }
             /* IF A LETTER WAS RECEIVED, ECHO IT BACK SO THE USER CAN SEE IT */
-            if (appData.isReadComplete) {
-                USB_DEVICE_CDC_Write(USB_DEVICE_CDC_INDEX_0,
-                        &appData.writeTransferHandle,
-                        appData.readBuffer, 1,
-                        USB_DEVICE_CDC_TRANSFER_FLAGS_DATA_COMPLETE);
-            }
+//            if (appData.isReadComplete) {
+//                USB_DEVICE_CDC_Write(USB_DEVICE_CDC_INDEX_0,
+//                        &appData.writeTransferHandle,
+//                        appData.readBuffer, 1,
+//                        USB_DEVICE_CDC_TRANSFER_FLAGS_DATA_COMPLETE);
+//            }
             /* ELSE SEND THE MESSAGE YOU WANTED TO SEND */
-            else {
-                USB_DEVICE_CDC_Write(USB_DEVICE_CDC_INDEX_0,
-                        &appData.writeTransferHandle, dataOut, len,
-                        USB_DEVICE_CDC_TRANSFER_FLAGS_DATA_COMPLETE);
-                startTime = _CP0_GET_COUNT(); // reset the timer for acurate delays
-            }
+//            else {
+            USB_DEVICE_CDC_Write(USB_DEVICE_CDC_INDEX_0,
+                    &appData.writeTransferHandle, dataOut, len,
+                    USB_DEVICE_CDC_TRANSFER_FLAGS_DATA_COMPLETE);
+                
+            startTime = _CP0_GET_COUNT(); // reset the timer for acurate delays
+//            }
             break;
 
         case APP_STATE_WAIT_FOR_WRITE_COMPLETE:
