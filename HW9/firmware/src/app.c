@@ -542,7 +542,7 @@ void APP_Tasks(void) {
 }
 
 
-void initIMU(){
+void initIMU(void){
     //turn off analog input on I2C2 pins
     ANSELBbits.ANSB2 = 0;
     ANSELBbits.ANSB3 = 0;

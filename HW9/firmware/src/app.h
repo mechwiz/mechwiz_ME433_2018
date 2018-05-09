@@ -58,6 +58,7 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include <stdlib.h>
 #include "system_config.h"
 #include "system_definitions.h"
+#include "i2c_master_noint.h"
 
 // DOM-IGNORE-BEGIN
 #ifdef __cplusplus  // Provide C++ Compatibility
@@ -250,7 +251,7 @@ void APP_Initialize ( void );
 
 void APP_Tasks( void );
 
-void initIMU();
+void initIMU(void);
 void setIMU(unsigned char pin,unsigned char level);
 void getIMU(unsigned char register, unsigned char * data, int length);
 
