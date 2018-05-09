@@ -364,10 +364,10 @@ void APP_Initialize(void) {
     // do your TRIS and LAT commands here
     TRISAbits.TRISA4 = 0;  // make RA4 an output
     LATAbits.LATA4 = 1; // make RA4 high to turn LED on initially
-    
+    LCD_init();
     initIMU();
     __builtin_enable_interrupts();
-
+    LCD_clearScreen(CYAN);
     startTime = _CP0_GET_COUNT();
     blinkTime = _CP0_GET_COUNT();
 }
