@@ -484,14 +484,16 @@ void APP_Tasks(void) {
                     LATAINV = 0x10;
             }
             
+            static unsigned char data[14];
+            static short values[7];
+            static int j;
+            getIMU(0x20,data,14);
+            for (j=0;j<14;j+=2){
+                values[j/2] = data[j] | (data[j+1]<<8);
+            }
+            
             if (appData.readBuffer[0]=='r'){
-                static unsigned char data[14];
-                static short values[7];
-                static int j;
-                getIMU(0x20,data,14);
-                for (j=0;j<14;j+=2){
-                    values[j/2] = data[j] | (data[j+1]<<8);
-                }
+                
                 len = sprintf(dataOut, "%d, %d, %d, %d, %d, %d, %d\r\n", i,values[4],values[5],values[6],values[1],values[2],values[3]);
                 i++; // increment the index so we see a change in the text
                 if (i==100){
@@ -501,6 +503,19 @@ void APP_Tasks(void) {
             }else{
                 len = 1;
                 dataOut[0]=0;
+                static unsigned char message[30];
+                static unsigned char whoami;
+
+                getIMU(0x0F,data,1);
+                whoami = data[0];
+                sprintf(message,"WHOAMI %d  ",whoami);
+                drawString(10,10,message,MAGENTA,CYAN);
+                sprintf(message,"AX %d  ",values[4]);
+                drawString(10,20,message,MAGENTA,CYAN);
+                sprintf(message,"AY %d  ",values[5]);
+                drawString(10,30,message,MAGENTA,CYAN);
+                sprintf(message,"AZ %d  ",values[6]);
+                drawString(10,40,message,MAGENTA,CYAN);
             }
             /* IF A LETTER WAS RECEIVED, ECHO IT BACK SO THE USER CAN SEE IT */
 //            if (appData.isReadComplete) {
