@@ -23,6 +23,8 @@ at a cufoff frequency at 5 Hz (which is at 0.1 as explained in #1). The plot is 
 
 4. Filter Data
 
-The output plot of the filtered data is shown below:
+The output plot of the filtered data is shown below. From the data, it can be seen that the
+FIR filter seems to do the best in being smooth and close to the actual trend of the raw values.
+They are all fairly good though.
 
 ![data.png](imgs/data.png)
