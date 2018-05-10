@@ -486,7 +486,16 @@ void APP_Tasks(void) {
             
             static unsigned char data[14];
             static short values[7];
-            static int j;
+            static int j,k;
+            static float maf[9]={0.1111,0.1111,0.1111,0.1111,0.1111,0.1111,0.1111,0.1111,0.1111};
+            static float fir[9]={0.0144,0.0439,0.1202,0.2025,0.2380,0.2025,0.1202,0.0439,0.0144};
+            static short buffer[9];
+            static short oldbuf[9];
+            static short filter[4];
+            static float a = 0.75;
+            static float b = 0.25;
+            static float f1,f2, f3;
+            
             getIMU(0x20,data,14);
             for (j=0;j<14;j+=2){
                 values[j/2] = data[j] | (data[j+1]<<8);
@@ -494,11 +503,32 @@ void APP_Tasks(void) {
             
             if (appData.readBuffer[0]=='r'){
                 
-                len = sprintf(dataOut, "%d, %d, %d, %d, %d, %d, %d\r\n", i,values[4],values[5],values[6],values[1],values[2],values[3]);
+                for (k=1;k<9;k++){
+                    buffer[k]=oldbuf[k-1];
+                }
+                buffer[0] = values[6];
+                filter[0] = values[6];
+
+                f1 = 0;
+                f3 = 0;
+                for (k=0;k<9;k++){
+                    f1 += maf[k]*buffer[k];
+                    f3 += fir[k]*buffer[k];
+                }
+
+                for (k=0;k<9;k++){
+                    oldbuf[k]=buffer[k];
+                }
+                f2 = f2*a + b*values[6];
+                filter[1] = (short)(f1);
+                filter[2] = (short)(f2);
+                filter[3] = (short)(f3);
+                len = sprintf(dataOut, "%d, %d, %d, %d, %d\r\n", i,filter[0],filter[1],filter[2],filter[3]);
                 i++; // increment the index so we see a change in the text
                 if (i==100){
                     appData.readBuffer[0]='n';
                     i = 0;
+                    f2 = 0;
                 }
             }else{
                 len = 1;
