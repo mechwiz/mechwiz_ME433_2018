@@ -60,6 +60,8 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include "system_config.h"
 #include "system_definitions.h"
 #include "mouse.h"
+#include "ST7735.h"           // processor SFR definitions
+#include "i2c_master_noint.h"
 
 // *****************************************************************************
 // *****************************************************************************
@@ -236,6 +238,11 @@ void APP_Initialize ( void );
 
 void APP_Tasks ( void );
 
+void initIMU(void);
+void setIMU(unsigned char pin,unsigned char level);
+void getIMU(unsigned char register, unsigned char * data, int length);
+void drawChar(unsigned short x, unsigned short y, unsigned char msg, unsigned short c1, unsigned short c2);
+void drawString(unsigned short x, unsigned short y, unsigned char *msg, unsigned short c1, unsigned short c2);
 
 #endif /* _APP_H */
 /*******************************************************************************

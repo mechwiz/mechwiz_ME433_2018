@@ -54,7 +54,11 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 // *****************************************************************************
 
 #include "app.h"
+#include <stdio.h>
+#include <xc.h>
 
+// Set address
+#define SLAVE_ADDR 0b1101011
 
 // *****************************************************************************
 // *****************************************************************************
@@ -83,7 +87,7 @@ APP_DATA appData;
 MOUSE_REPORT mouseReport APP_MAKE_BUFFER_DMA_READY;
 MOUSE_REPORT mouseReportPrevious APP_MAKE_BUFFER_DMA_READY;
 
-
+int blinkTime = 0;
 // *****************************************************************************
 // *****************************************************************************
 // Section: Application Callback Functions
@@ -268,6 +272,29 @@ void APP_Initialize(void) {
     //appData.emulateMouse = true;
     appData.hidInstance = 0;
     appData.isMouseReportSendBusy = false;
+    
+    __builtin_disable_interrupts();
+
+    // set the CP0 CONFIG register to indicate that kseg0 is cacheable (0x3)
+    __builtin_mtc0(_CP0_CONFIG, _CP0_CONFIG_SELECT, 0xa4210583);
+
+    // 0 data RAM access wait states
+    BMXCONbits.BMXWSDRM = 0x0;
+
+    // enable multi vector interrupts
+    INTCONbits.MVEC = 0x1;
+
+    // disable JTAG to get pins back
+    DDPCONbits.JTAGEN = 0;
+    
+    // do your TRIS and LAT commands here
+    TRISAbits.TRISA4 = 0;  // make RA4 an output
+    LATAbits.LATA4 = 1; // make RA4 high to turn LED on initially
+    LCD_init();
+    initIMU();
+    __builtin_enable_interrupts();
+    LCD_clearScreen(CYAN);
+    blinkTime = _CP0_GET_COUNT();
 }
 
 /******************************************************************************
@@ -282,6 +309,12 @@ void APP_Tasks(void) {
     static int8_t vector = 0;
     static uint8_t movement_length = 0;
     int8_t dir_table[] = {-4, -4, -4, 0, 4, 4, 4, 0};
+    
+    static unsigned char data[14];
+    static short values[7];
+    static unsigned char message[30];
+    static unsigned char whoami;
+    static int j;
 
     /* Check the application's current state. */
     switch (appData.state) {
@@ -317,6 +350,29 @@ void APP_Tasks(void) {
             break;
 
         case APP_STATE_MOUSE_EMULATE:
+            
+            getIMU(0x20,data,14);
+            for (j=0;j<14;j+=2){
+                values[j/2] = data[j] | (data[j+1]<<8);
+            }
+
+            getIMU(0x0F,data,1);
+            whoami = data[0];
+            sprintf(message,"WHOAMI %d  ",whoami);
+            drawString(10,10,message,MAGENTA,CYAN);
+            sprintf(message,"AX %d  ",values[4]);
+            drawString(10,20,message,MAGENTA,CYAN);
+            sprintf(message,"AY %d  ",values[5]);
+            drawString(10,30,message,MAGENTA,CYAN);
+            sprintf(message,"AZ %d  ",values[6]);
+            drawString(10,40,message,MAGENTA,CYAN);
+
+            if (_CP0_GET_COUNT() - blinkTime > (48000000 / 2 / 5)) {
+                    blinkTime = _CP0_GET_COUNT();
+
+                    //invert RA4
+                    LATAINV = 0x10;
+            }
             
             // every 50th loop, or 20 times per second
             if (movement_length > 50) {
@@ -396,6 +452,74 @@ void APP_Tasks(void) {
     }
 }
 
+void initIMU(void){
+    //turn off analog input on I2C2 pins
+    ANSELBbits.ANSB2 = 0;
+    ANSELBbits.ANSB3 = 0;
+    i2c_master_setup();
+    
+    //set 1.66 kHz, 2g, and 100 Hz
+    setIMU(0x10,0b10000010);
+    //set 1.66 kHz and 1000 dps
+    setIMU(0x11,0b10001000);
+
+}
+
+void setIMU(unsigned char pin, unsigned char level){
+    i2c_master_start();
+    i2c_master_send(SLAVE_ADDR << 1 | 0);
+    i2c_master_send(pin);
+    i2c_master_send(level);
+    i2c_master_stop();
+    
+}
+
+void getIMU(unsigned char reg, unsigned char * data, int length){
+    i2c_master_start();
+    i2c_master_send(SLAVE_ADDR << 1 | 0);
+    i2c_master_send(reg);
+    i2c_master_restart();
+    i2c_master_send(SLAVE_ADDR << 1 | 1);
+    int i;
+    for(i=0;i<length;i++){
+        data[i]=i2c_master_recv();
+        if(i==length-1){
+            i2c_master_ack(1);
+        }else {
+            i2c_master_ack(0);
+        }
+    }
+    i2c_master_stop(); // make the stop bit
+  
+}
+
+void drawChar(unsigned short x, unsigned short y, unsigned char msg, unsigned short c1, unsigned short c2){
+    unsigned char row = msg-0x20;
+    int col;
+    for (col=0;col<5;col++){
+        unsigned char pixels = ASCII[row][col];
+        int i;
+        for (i=0;i<8;i++){
+            if ((x+col)<128 && (y+i)<160){
+                if (((pixels>>i) & 1) == 1){
+                    LCD_drawPixel(x+col,y+i,c1);
+                } else {
+                    LCD_drawPixel(x+col,y+i,c2);
+                }
+            }
+        }
+    }
+}
+
+void drawString(unsigned short x, unsigned short y, unsigned char *msg, unsigned short c1, unsigned short c2){
+   int i = 0;
+   
+   while(msg[i]){
+       drawChar(x+5*i,y,msg[i],c1,c2);
+       i++;
+   }
+    
+}
 
 /*******************************************************************************
  End of File
