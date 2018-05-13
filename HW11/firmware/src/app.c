@@ -315,6 +315,8 @@ void APP_Tasks(void) {
     static unsigned char message[30];
     static unsigned char whoami;
     static int j;
+    static uint8_t xinc = 0;
+    static uint8_t yinc = 0;
 
     /* Check the application's current state. */
     switch (appData.state) {
@@ -374,12 +376,23 @@ void APP_Tasks(void) {
                     LATAINV = 0x10;
             }
             
+            if (abs(values[4]) > 1500){
+                xinc = 1;
+            } else {
+                xinc = 0;
+            }
+            
+            if (abs(values[5]) > 1500){
+                yinc = 1;
+            } else {
+                yinc = 0;
+            }
             // every 50th loop, or 20 times per second
 //            if (movement_length > 50) {
             appData.mouseButton[0] = MOUSE_BUTTON_STATE_RELEASED;
             appData.mouseButton[1] = MOUSE_BUTTON_STATE_RELEASED;
-            appData.xCoordinate = (int8_t) 2;
-            appData.yCoordinate = (int8_t) 2;
+            appData.xCoordinate = (int8_t) xinc*(-values[4]/500.0);
+            appData.yCoordinate = (int8_t) yinc*(-values[5]/500.0);
 //            vector++;
 //            movement_length = 0;
 //            }
