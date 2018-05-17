@@ -38,8 +38,10 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
     private Paint paint1 = new Paint();
     private TextView mTextView;
     private SeekBar myControl;
+    private SeekBar myControl2;
 
     static int thresh = 0;
+    static int thresh2 = 0;
     static long prevtime = 0; // for FPS calculation
 
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,8 +50,10 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON); // keeps the screen from turning off
 
         myControl = (SeekBar) findViewById(R.id.seek1);
+        myControl2 = (SeekBar) findViewById(R.id.seek2);
         mTextView = (TextView) findViewById(R.id.cameraStatus);
         setMyControlListener();
+        setMyControlListener2();
 
         // see if the app has permission to use the camera
         ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.CAMERA}, 1);
@@ -108,13 +112,13 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
 //            int thresh = 0; // comparison value
             int[] pixels = new int[bmp.getWidth()]; // pixels[] is the RGBA data
 
-            for (int startY = 0; startY< bmp.getHeight();startY++) {
+            for (int startY = 0; startY< bmp.getHeight();startY+=2) {
 //                int startY = 200; // which row in the bitmap to analyze to read
                 bmp.getPixels(pixels, 0, bmp.getWidth(), 0, startY, bmp.getWidth(), 1);
 
                 // in the row, see if there is more green than red
                 for (int i = 0; i < bmp.getWidth(); i++) {
-                    if ((green(pixels[i]) - red(pixels[i])) > thresh) {
+                    if ((green(pixels[i]) - red(pixels[i])) > thresh && (green(pixels[i]) - blue(pixels[i])) > thresh2) {
                         pixels[i] = rgb(0, 255, 0); // over write the pixel with pure green
                     }
                 }
@@ -149,6 +153,28 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 progressChanged = progress;
                 thresh = progress;
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
+    }
+
+    private void setMyControlListener2() {
+        myControl2.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
+
+            int progressChanged = 0;
+
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                progressChanged = progress;
+                thresh2 = progress;
             }
 
             @Override
