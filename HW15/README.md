@@ -3,9 +3,9 @@
 
 1. Wheel Design and corresponding 3D printed part:
 
-Wheel Design                            | 3D printed part
-:--------------------------------------:|:--------------------------------------:
-<img src="imgs/wheel.PNG" width="50%"> | <img src="imgs/wheel_actual.JPG" width="40%" height="40%">
+Wheel Design                 | 3D printed part
+:---------------------------:|:----------------------------------------:
+![wheel.PNG](imgs/wheel.PNG) | ![wheel_actual.JPG](imgs/wheel_actual.JPG)
 
 2. CAD Housing Assembly Pic and corresponding Laser Cut Assembly:
 
