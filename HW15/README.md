@@ -5,7 +5,7 @@
 
 Wheel Design                 | 3D printed part
 :---------------------------:|:----------------------------------------:
-![wheel.PNG](imgs/wheel.PNG) | ![wheel_actual.JPG](imgs/wheel_actual.JPGs=200)
+![wheel.PNG](imgs/wheel.PNG) | ![wheel_actual.JPG](imgs/wheel_actual.JPG) <!-- .element height="50%" width="50%" -->
 
 2. CAD Housing Assembly Pic and corresponding Laser Cut Assembly:
 
