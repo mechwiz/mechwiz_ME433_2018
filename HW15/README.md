@@ -11,4 +11,4 @@ Wheel Design                 | 3D printed part
 
 Housing Design                   | Laser Cut Assembly
 :-------------------------------:|:----------------------------------------:
-![housing.png](imgs/housing.PNG) |
+![housing.png](imgs/housing.PNG) | ![housing_actual.jpg](imgs/housing_actual.jpg)
