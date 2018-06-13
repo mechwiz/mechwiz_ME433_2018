@@ -83,7 +83,7 @@ void __ISR(_TIMER_4_VECTOR, IPL4SOFT) Timer4ISR(void) {
     float Kp_right = 1.5, Ki_right = 0.1;
     float left_ref = 0, right_ref = 0;
     int MAX_DUTY = 40;
-    float kp = 1;
+    float kp = .1;
     
     int error = rxVal - 319; // 240 means the dot is in the middle of the screen
     if (error<0) { // slow down the left motor to steer to the left
