@@ -250,6 +250,7 @@ void APP_Initialize ( void );
 
 void APP_Tasks( void );
 
+void motor_init(void);
 
 #endif /* _APP_H */
 
