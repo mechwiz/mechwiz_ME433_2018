@@ -70,7 +70,7 @@ int startTime = 0; // to remember the loop time
 char rx[64]; // the raw data
 int rxPos = 0; // how much data has been stored
 int gotRx = 0; // the flag
-int rxVal = 0; // a place to store the int that was received
+//int rxVal = 0; // a place to store the int that was received
 
 // *****************************************************************************
 /* Application Data
@@ -363,7 +363,7 @@ void APP_Initialize(void) {
     // do your TRIS and LAT commands here
     TRISAbits.TRISA4 = 0;  // make RA4 an output
     LATAbits.LATA4 = 1; // make RA4 high to turn LED on initially
-    
+    motor_init();
     __builtin_enable_interrupts();
     
     startTime = _CP0_GET_COUNT();
@@ -504,8 +504,8 @@ void APP_Tasks(void) {
                 rxPos = 0;
                 gotRx = 0;
             } else {
-                len = sprintf(dataOut, "%d\r\n", i);
-                i++;
+                len = 1;
+                dataOut[0]=0;
                 USB_DEVICE_CDC_Write(USB_DEVICE_CDC_INDEX_0,
                         &appData.writeTransferHandle, dataOut, len,
                         USB_DEVICE_CDC_TRANSFER_FLAGS_DATA_COMPLETE);

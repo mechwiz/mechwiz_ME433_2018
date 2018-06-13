@@ -77,8 +77,28 @@ void __ISR(_USB_1_VECTOR, ipl4AUTO) _IntHandlerUSBInstance0(void)
 
 void __ISR(_TIMER_4_VECTOR, IPL4SOFT) Timer4ISR(void) {
   // code for PI control goes here
-
-  IFS0bits.T4IF = 0; // clear interrupt flag, last line
+    static float Eint_left = 0;
+    static float Eint_right = 0;
+    float Kp_left = 1, Ki_left = 0;
+    float Kp_right = 1, Ki_right = 0;
+    
+    int leftcounts = TMR3;
+    TMR3 = 0;
+    int rightcounts = TMR5;
+    TMR5 = 0;
+    
+    float evel_left = rxVal - leftcounts;
+    float evel_right = rxVal - rightcounts;
+    
+    Eint_left+=evel_left;
+    Eint_right+=evel_right;
+    
+    float u_left = Kp_left*evel_left + Ki_left*Eint_left;
+    float u_right = Kp_right*evel_right + Ki_right*Eint_right;
+    
+    OC4RS = (int)(abs(u_left)/100.0*2400.0+0.5);
+    OC1RS = (int)(abs(u_right)/100.0*2400.0+0.5);
+    IFS0bits.T4IF = 0; // clear interrupt flag, last line
 }
 /*******************************************************************************
  End of File
