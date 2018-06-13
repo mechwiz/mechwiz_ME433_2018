@@ -71,6 +71,7 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
     static int red_thresh = 0;
     static int t_thresh = 0;
     static int sum_thresh = 0;
+    static int pos=319;
     static long prevtime = 0; // for FPS calculation
 
     protected void onCreate(Bundle savedInstanceState) {
@@ -117,7 +118,8 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
         Camera.Parameters parameters = mCamera.getParameters();
         parameters.setPreviewSize(640, 480);
         parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_INFINITY); // no autofocusing
-        parameters.setAutoExposureLock(true); // keep the white balance constant
+        parameters.setExposureCompensation(-1);
+        parameters.setAutoExposureLock(false); // keep the white balance constant
         mCamera.setParameters(parameters);
         mCamera.setDisplayOrientation(90); // rotate to portrait mode
 
@@ -151,12 +153,13 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
             int numline = 0;
             int[] pixels = new int[bmp.getWidth()]; // pixels[] is the RGBA data
             //int startY = 200; // which row in the bitmap to analyze to read
-            for (int startY = 100; startY< bmp.getHeight();startY+=100) {
+            for (int startY = 100; startY< 250;startY+=100) {
                 bmp.getPixels(pixels, 0, bmp.getWidth(), 0, startY, bmp.getWidth(), 1);
                 int sum_mr = 0; // the sum of the mass times the radius
                 int sum_m = 0; // the sum of the masses
                 for (int i = 0; i < bmp.getWidth(); i++) {
                     if ( ((red(pixels[i]) - (green(pixels[i])+blue(pixels[i]))/2) > -red_thresh)  && ((red(pixels[i]) - (green(pixels[i])+blue(pixels[i]))/2) < red_thresh) && (red(pixels[i])  > t_thresh)) {
+
                         pixels[i] = rgb(1, 1, 1); // set the pixel to almost 100% black
                     }
                     sum_m = sum_m + green(pixels[i])+red(pixels[i])+blue(pixels[i]);
@@ -188,11 +191,9 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
 
 
             // draw a circle at some position
-            int pos;
+
             if(numline>0) {
                 pos = sumcom / numline;
-            }else{
-                pos = 319;
             }
             canvas.drawCircle(pos, 200, 5, paint1); // x position, y position, diameter, color
 
