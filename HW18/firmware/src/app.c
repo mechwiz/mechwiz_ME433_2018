@@ -65,7 +65,7 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 
 uint8_t APP_MAKE_BUFFER_DMA_READY dataOut[APP_READ_BUFFER_SIZE];
 uint8_t APP_MAKE_BUFFER_DMA_READY readBuffer[APP_READ_BUFFER_SIZE];
-int len, i = 0;
+int len;
 int startTime = 0; // to remember the loop time
 char rx[64]; // the raw data
 int rxPos = 0; // how much data has been stored
@@ -495,8 +495,9 @@ void APP_Tasks(void) {
             /* THIS IS WHERE YOU CAN READ YOUR IMU, PRINT TO THE LCD, ETC */
             
             if (gotRx) {
+                len = 1;
+                dataOut[0]=0;
                 len = sprintf(dataOut, "got: %d\r\n", rxVal);
-                i++;
                 USB_DEVICE_CDC_Write(USB_DEVICE_CDC_INDEX_0,
                         &appData.writeTransferHandle,
                         dataOut, len,

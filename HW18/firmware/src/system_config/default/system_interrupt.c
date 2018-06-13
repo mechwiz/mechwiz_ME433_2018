@@ -77,13 +77,13 @@ void __ISR(_USB_1_VECTOR, ipl4AUTO) _IntHandlerUSBInstance0(void)
 
 void __ISR(_TIMER_4_VECTOR, IPL4SOFT) Timer4ISR(void) {
   // code for PI control goes here
-    static float Eint_left = 0;
-    static float Eint_right = 0;
-    float Kp_left = 1.5, Ki_left = 0.1;
-    float Kp_right = 1.5, Ki_right = 0.1;
+    static float Eint_left = 0, eprev_left = 0;
+    static float Eint_right = 0, eprev_right = 0;
+    float Kp_left = 1.5, Ki_left = 0, Kd_left = 0;
+    float Kp_right = 1.5, Ki_right = 0, Kd_right = 0;
     float left_ref = 0, right_ref = 0;
-    int MAX_DUTY = 40;
-    float kp = .1;
+    int MAX_DUTY = 12 ;
+    float kp = 0.05;
     
     int error = rxVal - 319; // 240 means the dot is in the middle of the screen
     if (error<0) { // slow down the left motor to steer to the left
@@ -129,8 +129,14 @@ void __ISR(_TIMER_4_VECTOR, IPL4SOFT) Timer4ISR(void) {
         Eint_right = 3;
     }
     
-    float u_left = Kp_left*evel_left + Ki_left*Eint_left;
-    float u_right = Kp_right*evel_right + Ki_right*Eint_right;
+    float echange_left = evel_left - eprev_left;
+    float echange_right = evel_right - eprev_right;
+    
+    float u_left = Kp_left*evel_left + Ki_left*Eint_left + Kd_left*echange_left;
+    float u_right = Kp_right*evel_right + Ki_right*Eint_right + Kd_right*echange_right;
+    
+    eprev_left = evel_left;
+    eprev_right = evel_right;
     
     if (u_left < 0){
         u_left = 0;
