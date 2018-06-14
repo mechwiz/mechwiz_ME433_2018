@@ -13,4 +13,4 @@ Interior
 ![interior.JPG](imgs/interior.JPG)
 
 Underside
-![underside.JPG](underside.JPG)
+![underside.JPG](imgs/underside.JPG)
