@@ -3,10 +3,14 @@
 
 Robot Design Pics
 
-![Full Robot Model](imgs/robot.JPG)
+Full Robot Model
+![robot.JPG](imgs/robot.JPG)
 
-![Side View](imgs/chsis.JPG)
+Side View
+![chasis.JPG](imgs/chasis.JPG)
 
-![Interior](imgs/interior.JPG)
+Interior
+![interior.JPG](imgs/interior.JPG)
 
-![Underside](underside.JPG)
+Underside
+![underside.JPG](underside.JPG)
